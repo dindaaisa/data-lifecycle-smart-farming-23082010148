@@ -15,7 +15,7 @@ st.markdown("Monitoring sensor IoT untuk analisis pertanian cerdas")
 # =============================
 # LOAD DATA
 # =============================
-df = pd.read_csv("Smart_Farming_Crop_Yield_2024.csv")
+df = pd.read_csv("smart_farming_cleaned.csv")
 
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 
