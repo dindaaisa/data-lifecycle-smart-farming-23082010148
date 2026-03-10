@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+import os
 
 # =============================
 # PAGE CONFIG
@@ -16,7 +17,8 @@ st.markdown("Monitoring sensor IoT untuk analisis pertanian cerdas")
 # =============================
 # LOAD DATA
 # =============================
-df = pd.read_csv("../outputs/smart_farming_cleaned.csv")
+data_path = os.path.join("outputs", "smart_farming_cleaned.csv")
+df = pd.read_csv(data_path)
 
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 
@@ -39,8 +41,8 @@ timeliness = len(recent_data) / len(df)
 
 col1, col2, col3 = st.columns(3)
 
-col1.metric("Accuracy Score", f"{accuracy:.2f}")
-col2.metric("Completeness Score", f"{completeness:.2f}")
+col1.metric("Accuracy", f"{accuracy:.2f}")
+col2.metric("Completeness", f"{completeness:.2f}")
 col3.metric("Timeliness (30 days)", f"{timeliness:.2f}")
 
 st.divider()
@@ -60,7 +62,10 @@ crop = st.sidebar.selectbox(
     df["crop_type"].unique()
 )
 
-filtered_df = df[(df["region"] == region) & (df["crop_type"] == crop)]
+filtered_df = df[
+    (df["region"] == region) &
+    (df["crop_type"] == crop)
+]
 
 # =============================
 # KPI METRICS
@@ -90,6 +95,7 @@ st.divider()
 # DATASET PREVIEW
 # =============================
 st.subheader("📄 Dataset Preview")
+
 st.dataframe(filtered_df.head())
 
 st.divider()
@@ -144,7 +150,7 @@ st.plotly_chart(fig_gauge, use_container_width=True)
 st.divider()
 
 # =============================
-# HEATMAP KORELASI SENSOR
+# SENSOR CORRELATION HEATMAP
 # =============================
 st.subheader("🔥 Sensor Correlation Heatmap")
 
