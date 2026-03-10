@@ -1,55 +1,30 @@
 import streamlit as st
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
+import seaborn as sns
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import os
 
-# =============================
+# ================================
 # PAGE CONFIG
-# =============================
-st.set_page_config(page_title="Smart Farming Dashboard", layout="wide")
+# ================================
+st.set_page_config(
+    page_title="Smart Farming Dashboard",
+    layout="wide"
+)
 
 st.title("🌱 Smart Farming Sensor Dashboard")
-st.markdown("Monitoring sensor IoT untuk analisis pertanian cerdas")
+st.markdown("Dashboard monitoring sensor IoT untuk analisis pertanian cerdas")
 
-# =============================
+# ================================
 # LOAD DATA
-# =============================
-data_path = os.path.join("outputs", "smart_farming_cleaned.csv")
-df = pd.read_csv(data_path)
+# ================================
+df = pd.read_csv("../outputs/smart_farming_cleaned.csv")
 
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 
-# =============================
-# DATA QUALITY SCORE
-# =============================
-st.subheader("📊 Data Quality Monitoring")
-
-total_cells = df.size
-missing_cells = df.isna().sum().sum()
-non_null_cells = total_cells - missing_cells
-
-accuracy = 1 - (missing_cells / total_cells)
-completeness = non_null_cells / total_cells
-
-last_30_days = datetime.now() - timedelta(days=30)
-recent_data = df[df["timestamp"] >= last_30_days]
-
-timeliness = len(recent_data) / len(df)
-
-col1, col2, col3 = st.columns(3)
-
-col1.metric("Accuracy", f"{accuracy:.2f}")
-col2.metric("Completeness", f"{completeness:.2f}")
-col3.metric("Timeliness (30 days)", f"{timeliness:.2f}")
-
-st.divider()
-
-# =============================
+# ================================
 # SIDEBAR FILTER
-# =============================
+# ================================
 st.sidebar.header("Filter Data")
 
 region = st.sidebar.selectbox(
@@ -67,43 +42,41 @@ filtered_df = df[
     (df["crop_type"] == crop)
 ]
 
-# =============================
-# KPI METRICS
-# =============================
-st.subheader("📈 Key Performance Indicators")
+# ================================
+# DATA QUALITY MONITORING
+# ================================
+st.subheader("📊 Data Quality Monitoring")
 
 col1, col2, col3 = st.columns(3)
 
-col1.metric(
-    "Average Yield",
-    f"{round(filtered_df['yield_kg_per_hectare'].mean(),2)} kg"
-)
+accuracy = 1 - (filtered_df.isnull().sum().sum() / filtered_df.size)
+completeness = filtered_df.notnull().sum().sum() / filtered_df.size
 
-col2.metric(
-    "Average Soil Moisture",
-    f"{round(filtered_df['soil_moisture_%'].mean(),2)} %"
-)
+recent_data = filtered_df[
+    filtered_df["timestamp"] >
+    filtered_df["timestamp"].max() - pd.Timedelta(days=30)
+]
 
-col3.metric(
-    "Average Temperature",
-    f"{round(filtered_df['temperature_C'].mean(),2)} °C"
-)
+timeliness = len(recent_data) / len(filtered_df)
+
+col1.metric("Accuracy", round(accuracy, 2))
+col2.metric("Completeness", round(completeness, 2))
+col3.metric("Timeliness (30 days)", round(timeliness, 2))
 
 st.divider()
 
-# =============================
-# DATASET PREVIEW
-# =============================
+# ================================
+# DATA PREVIEW
+# ================================
 st.subheader("📄 Dataset Preview")
-
 st.dataframe(filtered_df.head())
 
 st.divider()
 
-# =============================
+# ================================
 # TIME SERIES SENSOR
-# =============================
-st.subheader("📈 Soil Moisture Trend")
+# ================================
+st.subheader("📈 Soil Moisture Trend (Time Series)")
 
 df_sorted = filtered_df.sort_values("timestamp")
 
@@ -121,12 +94,10 @@ plt.xticks(rotation=45)
 
 st.pyplot(fig1)
 
-st.divider()
-
-# =============================
+# ================================
 # GAUGE METER
-# =============================
-st.subheader("🌡 Soil Moisture Gauge")
+# ================================
+st.subheader("🌡 Current Soil Moisture Gauge")
 
 current_moisture = filtered_df["soil_moisture_%"].mean()
 
@@ -149,9 +120,9 @@ st.plotly_chart(fig_gauge, use_container_width=True)
 
 st.divider()
 
-# =============================
-# SENSOR CORRELATION HEATMAP
-# =============================
+# ================================
+# HEATMAP KORELASI SENSOR
+# ================================
 st.subheader("🔥 Sensor Correlation Heatmap")
 
 fig2, ax2 = plt.subplots(figsize=(10,6))
@@ -171,9 +142,9 @@ st.pyplot(fig2)
 
 st.divider()
 
-# =============================
+# ================================
 # ALERT SYSTEM
-# =============================
+# ================================
 st.subheader("🚨 Soil Moisture Alert System")
 
 threshold = 20
@@ -195,9 +166,9 @@ st.pyplot(fig3)
 
 st.divider()
 
-# =============================
-# FARM LOCATION MAP
-# =============================
+# ================================
+# MAP FARM LOCATION
+# ================================
 st.subheader("🗺 Farm Locations")
 
 st.map(filtered_df[["latitude","longitude"]])
