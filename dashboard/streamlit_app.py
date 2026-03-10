@@ -3,38 +3,42 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.graph_objects as go
+import os
 
-# ================================
+# =====================================
 # PAGE CONFIG
-# ================================
+# =====================================
 st.set_page_config(
     page_title="Smart Farming Dashboard",
     layout="wide"
 )
 
 st.title("🌱 Smart Farming Sensor Dashboard")
-st.markdown("Dashboard monitoring sensor IoT untuk analisis pertanian cerdas")
+st.markdown("Monitoring sensor IoT untuk analisis pertanian cerdas")
 
-# ================================
-# LOAD DATA
-# ================================
-df = pd.read_csv("../outputs/smart_farming_cleaned.csv")
+# =====================================
+# LOAD DATA (ANTI PATH ERROR)
+# =====================================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "..", "outputs", "smart_farming_cleaned.csv")
+
+df = pd.read_csv(DATA_PATH)
 
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 
-# ================================
+# =====================================
 # SIDEBAR FILTER
-# ================================
+# =====================================
 st.sidebar.header("Filter Data")
 
 region = st.sidebar.selectbox(
     "Select Region",
-    df["region"].unique()
+    sorted(df["region"].unique())
 )
 
 crop = st.sidebar.selectbox(
     "Select Crop Type",
-    df["crop_type"].unique()
+    sorted(df["crop_type"].unique())
 )
 
 filtered_df = df[
@@ -42,9 +46,9 @@ filtered_df = df[
     (df["crop_type"] == crop)
 ]
 
-# ================================
-# DATA QUALITY MONITORING
-# ================================
+# =====================================
+# DATA QUALITY METRICS
+# =====================================
 st.subheader("📊 Data Quality Monitoring")
 
 col1, col2, col3 = st.columns(3)
@@ -52,31 +56,31 @@ col1, col2, col3 = st.columns(3)
 accuracy = 1 - (filtered_df.isnull().sum().sum() / filtered_df.size)
 completeness = filtered_df.notnull().sum().sum() / filtered_df.size
 
-recent_data = filtered_df[
+recent = filtered_df[
     filtered_df["timestamp"] >
     filtered_df["timestamp"].max() - pd.Timedelta(days=30)
 ]
 
-timeliness = len(recent_data) / len(filtered_df)
+timeliness = len(recent) / len(filtered_df)
 
-col1.metric("Accuracy", round(accuracy, 2))
-col2.metric("Completeness", round(completeness, 2))
-col3.metric("Timeliness (30 days)", round(timeliness, 2))
+col1.metric("Accuracy", round(accuracy,2))
+col2.metric("Completeness", round(completeness,2))
+col3.metric("Timeliness (30 days)", round(timeliness,2))
 
 st.divider()
 
-# ================================
+# =====================================
 # DATA PREVIEW
-# ================================
+# =====================================
 st.subheader("📄 Dataset Preview")
 st.dataframe(filtered_df.head())
 
 st.divider()
 
-# ================================
+# =====================================
 # TIME SERIES SENSOR
-# ================================
-st.subheader("📈 Soil Moisture Trend (Time Series)")
+# =====================================
+st.subheader("📈 Soil Moisture Trend")
 
 df_sorted = filtered_df.sort_values("timestamp")
 
@@ -86,7 +90,6 @@ sns.lineplot(
     x="timestamp",
     y="soil_moisture_%",
     data=df_sorted,
-    color="green",
     ax=ax1
 )
 
@@ -94,10 +97,12 @@ plt.xticks(rotation=45)
 
 st.pyplot(fig1)
 
-# ================================
+st.divider()
+
+# =====================================
 # GAUGE METER
-# ================================
-st.subheader("🌡 Current Soil Moisture Gauge")
+# =====================================
+st.subheader("🌡 Soil Moisture Gauge")
 
 current_moisture = filtered_df["soil_moisture_%"].mean()
 
@@ -120,9 +125,9 @@ st.plotly_chart(fig_gauge, use_container_width=True)
 
 st.divider()
 
-# ================================
+# =====================================
 # HEATMAP KORELASI SENSOR
-# ================================
+# =====================================
 st.subheader("🔥 Sensor Correlation Heatmap")
 
 fig2, ax2 = plt.subplots(figsize=(10,6))
@@ -142,10 +147,10 @@ st.pyplot(fig2)
 
 st.divider()
 
-# ================================
+# =====================================
 # ALERT SYSTEM
-# ================================
-st.subheader("🚨 Soil Moisture Alert System")
+# =====================================
+st.subheader("🚨 Soil Moisture Alert")
 
 threshold = 20
 
@@ -166,9 +171,9 @@ st.pyplot(fig3)
 
 st.divider()
 
-# ================================
-# MAP FARM LOCATION
-# ================================
+# =====================================
+# FARM LOCATION MAP
+# =====================================
 st.subheader("🗺 Farm Locations")
 
 st.map(filtered_df[["latitude","longitude"]])
